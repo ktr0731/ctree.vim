@@ -23,14 +23,22 @@ function! s:Parse(line, n) abort
     return
   endif
 
-  " hoge>fuga>piyo
+  "hoge+huge>fuga>piyo
+  "div+div>p>span+em^bq+ql
   for i in range(strlen(a:line))
     let c = nr2char(strgetchar(a:line, i))
     if c == ' '
       continue
     endif
 
-    if c == '>'
+    if c == '+'
+      let sep = a:n == 0 ? '' : s:Space(a:n-1) . '+-- '
+      return evaled . "\n" . sep . s:Parse(strcharpart(a:line, i+1), a:n)
+    elseif c == '^'
+      "div+div>p>span+em^bq の時、縦棒ほしい
+      let space = s:Space(a:n-2)
+      return evaled . "\n" . space . '+-- '. s:Parse(strcharpart(a:line, i+1), a:n-1)
+    elseif c == '>'
       let space = s:Space(a:n)
       return evaled . "\n" . space . '+-- '. s:Parse(strcharpart(a:line, i+1), a:n+1)
     else
