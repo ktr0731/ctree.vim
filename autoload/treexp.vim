@@ -11,17 +11,15 @@ let s:NIL = -1
 function! treexp#Expand() abort
   " call s:Parse(getline('.'), 0)
   let tree = s:Parse(getline('.'), 0)
-  for item in tree
-    echo item.value
-  endfor
+  echo tree.childlen[0].childlen[0].childlen[0].value
 endfunction
 
 " line: target string
 " n: number of loop (first: 0)
 function! s:Parse(line, n) abort
-  " Use left-child, right-sibling representation
-  let i = 1
-  let tree = [{'parent': s:NIL, 'right': s:NIL, 'left': s:NIL, 'value': '.'}]
+  let prev = '>'
+  let tree = {'parent': s:NIL, 'childlen': [], 'value': '.'}
+  let parent = tree
 
   if strlen(a:line) == 0
     return tree
@@ -32,15 +30,33 @@ function! s:Parse(line, n) abort
   "div+div>p>span+em^bq+ql
   "div>(header>ul>li*2>a)+footer>p
   let word = ''
-  for k in range(strlen(a:line))
-    let c = nr2char(strgetchar(a:line, k))
+  for i in range(strlen(a:line))
+    let c = nr2char(strgetchar(a:line, i))
     if c ==# ' '
       continue
     endif
 
-    " if c == '+'
-    "   let sep = a:n == 0 ? '' : s:Space(a:n-1) . '+-- '
-    "   return evaled . "\n" . sep . s:Parse(strcharpart(a:line, i+1), a:n)
+    " 次に行う演算を保存しておく
+    if c =~# '[+*^>]' || i + 1 == strlen(a:line)
+      if i + 1 == strlen(a:line)
+        let word = word . c
+      endif
+
+      let node = {'parent': 0, 'childlen': [], 'value': word}
+
+      if prev ==# '>'
+        let parent.childlen = add(parent.childlen, node)
+        let word = ''
+      endif
+
+      let parent = node
+    endif
+
+    " if c ==# '+'
+    "   let node = {'parent': n - 1, 'left': s:NIL, 'right': s:NIL, 'value': word}
+    "   let tree = add(tree, node)
+    "   let word = ''
+    "   let i += 1
     " elseif c == '*'
     "   " TODO
     "   " let num = str2nr(nr2char(strgetchar(a:line, i+1)))
@@ -52,16 +68,12 @@ function! s:Parse(line, n) abort
     "   " endfor
     "   " return evaled
     "   continue
-    " elseif c == '^'
+    " if c ==# '^'
     "   "div+div>p>span+em^bq の時、縦棒ほしい
     "   let space = s:Space(a:n-2)
     "   return evaled . "\n" . space . '+-- '. s:Parse(strcharpart(a:line, i+1), a:n-1)
-    " elseif c == '>'
     if c ==# '>'
-      let node = {'parent': i - 1, 'left': s:NIL, 'right': s:NIL, 'value': word}
-      let tree = add(tree, node)
-      let word = ''
-      let i += 1
+      let prev = '>'
     else
       let word = word . c
     endif
