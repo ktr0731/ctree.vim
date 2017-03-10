@@ -11,12 +11,26 @@ let s:NIL = -1
 function! treexp#Expand() abort
   " call s:Parse(getline('.'), 0)
   let tree = s:Parse(getline('.'), 0)
-  echo tree.childlen[0].childlen[0].childlen[0].value
+  " echo tree.childlen[0].childlen[0].childlen[0].value
+  echo s:ToString(tree, 0)
+endfunction
+
+function! s:ToString(node, d) abort
+  for child in a:node.childlen
+    if child.value ==# '0'
+      return
+    endif
+
+    return child.value . ' > ' . s:ToString(child, a:d+1)
+  endfor
+
+  return 'EOL'
 endfunction
 
 " line: target string
 " n: number of loop (first: 0)
 function! s:Parse(line, n) abort
+  let n = 0
   let prev = '>'
   let tree = {'parent': s:NIL, 'childlen': [], 'value': '.'}
   let parent = tree
@@ -42,14 +56,17 @@ function! s:Parse(line, n) abort
         let word = word . c
       endif
 
-      let node = {'parent': 0, 'childlen': [], 'value': word}
-
       if prev ==# '>'
+        let node = {'parent': n, 'childlen': [], 'value': word}
         let parent.childlen = add(parent.childlen, node)
-        let word = ''
+        let parent = node
+        let n += 1
+      elseif prev ==# '+'
+        let node = {'parent': n, 'childlen': [], 'value': word}
+        let parent.childlen = add(parent.childlen, node)
       endif
 
-      let parent = node
+      let word = ''
     endif
 
     " if c ==# '+'
@@ -72,8 +89,8 @@ function! s:Parse(line, n) abort
     "   "div+div>p>span+em^bq の時、縦棒ほしい
     "   let space = s:Space(a:n-2)
     "   return evaled . "\n" . space . '+-- '. s:Parse(strcharpart(a:line, i+1), a:n-1)
-    if c ==# '>'
-      let prev = '>'
+    if c =~# '[+*^>]'
+      let prev = c
     else
       let word = word . c
     endif
