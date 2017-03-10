@@ -43,60 +43,66 @@ function! s:Parse(line, n) abort
   "hoge+huge>fuga>piyo
   "div+div>p>span+em^bq+ql
   "div>(header>ul>li*2>a)+footer>p
-  let word = ''
+  " let word = ''
+  let fragment = s:SplitLine(a:line)
+  echo fragment
+  " for i in range(strlen(a:line))
+  "   let c = nr2char(strgetchar(a:line, i))
+  "   if c ==# ' '
+  "     continue
+  "   endif
+  "
+  "   " 次に行う演算を保存しておく
+  "   if c =~# '[+*^>]' || i + 1 == strlen(a:line)
+  "     if i + 1 == strlen(a:line)
+  "       let word = word . c
+  "     endif
+  "
+  "     if prev ==# '>'
+  "       let node = {'parent': n, 'childlen': [], 'value': word}
+  "       let parent.childlen = add(parent.childlen, node)
+  "       let parent = node
+  "       let n += 1
+  "     elseif prev ==# '+'
+  "       let node = {'parent': n, 'childlen': [], 'value': word}
+  "       let parent.childlen = add(parent.childlen, node)
+  "     endif
+  "
+  "     let word = ''
+  "   endif
+  "
+  "   if c =~# '[+*^>]'
+  "     let prev = c
+  "   else
+  "     let word = word . c
+  "   endif
+  " endfor
+
+  return tree
+endfunction
+
+function! s:SplitLine(line) abort
+  let splitted = []
+  let text = ''
+
   for i in range(strlen(a:line))
     let c = nr2char(strgetchar(a:line, i))
     if c ==# ' '
       continue
     endif
 
-    " 次に行う演算を保存しておく
-    if c =~# '[+*^>]' || i + 1 == strlen(a:line)
-      if i + 1 == strlen(a:line)
-        let word = word . c
-      endif
-
-      if prev ==# '>'
-        let node = {'parent': n, 'childlen': [], 'value': word}
-        let parent.childlen = add(parent.childlen, node)
-        let parent = node
-        let n += 1
-      elseif prev ==# '+'
-        let node = {'parent': n, 'childlen': [], 'value': word}
-        let parent.childlen = add(parent.childlen, node)
-      endif
-
-      let word = ''
-    endif
-
-    " if c ==# '+'
-    "   let node = {'parent': n - 1, 'left': s:NIL, 'right': s:NIL, 'value': word}
-    "   let tree = add(tree, node)
-    "   let word = ''
-    "   let i += 1
-    " elseif c == '*'
-    "   " TODO
-    "   " let num = str2nr(nr2char(strgetchar(a:line, i+1)))
-    "   " let sep = a:n == 0 ? '' : s:Space(a:n-1) . '+-- '
-    "   "
-    "   " for j in range(num)
-    "   "   " 取得する必要がある
-    "   "   let evaled = evaled . "\n" . sep . s:Parse(strcharpart(a:line, i+2), a:n)
-    "   " endfor
-    "   " return evaled
-    "   continue
-    " if c ==# '^'
-    "   "div+div>p>span+em^bq の時、縦棒ほしい
-    "   let space = s:Space(a:n-2)
-    "   return evaled . "\n" . space . '+-- '. s:Parse(strcharpart(a:line, i+1), a:n-1)
     if c =~# '[+*^>]'
-      let prev = c
+      let splitted = add(splitted, text)
+      let splitted = add(splitted, c)
+      let text = ''
     else
-      let word = word . c
+      let text = text . c
     endif
   endfor
 
-  return tree
+  let splitted = add(splitted, text)
+
+  return splitted
 endfunction
 
 function! s:Space(n) abort
