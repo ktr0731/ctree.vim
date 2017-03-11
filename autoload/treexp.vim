@@ -7,45 +7,58 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:NIL = -1
+let s:True = 1
+let s:False = 0
 
 function! treexp#Expand() abort
   " call s:Parse(getline('.'), 0)
   let tree = s:Parse(getline('.'), 0)
   " echo tree.childlen[0].childlen[0].childlen[0].value
-  echo s:ToString(tree, 0)
-endfunction
-
-function! s:ToString(node, d) abort
-  for child in a:node.childlen
-    if child.value ==# '0'
-      return
-    endif
-
-    return child.value . ' > ' . s:ToString(child, a:d+1)
-  endfor
-
-  return 'EOL'
 endfunction
 
 " line: target string
-" n: number of loop (first: 0)
 function! s:Parse(line, n) abort
-  let n = 0
+  let i = 1
   let prev = '>'
-  let tree = {'parent': s:NIL, 'childlen': [], 'value': '.'}
-  let parent = tree
-
-  if strlen(a:line) == 0
-    return tree
-  endif
+  let root = {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': '.'}
 
   "hoge>fuga>piyo
   "hoge+huge>fuga>piyo
   "div+div>p>span+em^bq+ql
   "div>(header>ul>li*2>a)+footer>p
   " let word = ''
-  let fragment = s:SplitLine(a:line)
-  echo fragment
+  let fragment = s:SplitBy(a:line, '>', s:True)
+
+  let n = len(s:SplitBy(a:line, '+*^>', s:True))
+  let T = [{'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': '.'}]
+  for k in range(n)
+    if k ==# 0
+      continue
+    endif
+    let T = add(T, {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': ''})
+  endfor
+
+  for degree in fragment
+    let parsed = s:SplitBy(degree, '+*^', s:False)
+
+    let parentId = i
+    let prevId = -1
+    let j = 0
+    echo parsed
+    " for node in parsed
+    "   let i += 1
+    "   if j ==# 0
+    "     let T[parentId].left = {'parent': parentId, 'left': s:NIL, 'right': s:NIL, 'value': node}
+    "   else
+    "     let T[prevId].right = {'parent': parentId, 'left': s:NIL, 'right': s:NIL, 'value': node}
+    "   endif
+    "
+    "   let T[i].parent = parentId
+    "   let prevId = i
+    " endfor
+  endfor
+
+  " echo T
   " for i in range(strlen(a:line))
   "   let c = nr2char(strgetchar(a:line, i))
   "   if c ==# ' '
@@ -78,10 +91,10 @@ function! s:Parse(line, n) abort
   "   endif
   " endfor
 
-  return tree
+  " return tree
 endfunction
 
-function! s:SplitLine(line) abort
+function! s:SplitBy(line, pattern, omitOpes) abort
   let splitted = []
   let text = ''
 
@@ -91,9 +104,11 @@ function! s:SplitLine(line) abort
       continue
     endif
 
-    if c =~# '[+*^>]'
+    if c =~# '[' . a:pattern . ']'
       let splitted = add(splitted, text)
-      let splitted = add(splitted, c)
+      if a:omitOpes ==# s:False
+        let splitted = add(splitted, c)
+      endif
       let text = ''
     else
       let text = text . c
