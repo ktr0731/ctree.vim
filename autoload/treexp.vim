@@ -12,53 +12,54 @@ let s:False = 0
 
 function! treexp#Expand() abort
   " call s:Parse(getline('.'), 0)
-  let tree = s:Parse(getline('.'), 0)
+  let tree = s:Parse('.>' . getline('.'), 0)
   " echo tree.childlen[0].childlen[0].childlen[0].value
 endfunction
 
 " line: target string
 function! s:Parse(line, n) abort
-  let i = 1
   let prev = '>'
-  let root = {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': '.'}
+  let root = {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL}
+
+  let n = len(s:SplitBy(a:line, '+*^>', s:True))
+  let T = []
+  let value = []
+  for k in range(n)
+    let T = add(T, {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL})
+    let value = add(value, s:NIL)
+  endfor
 
   "hoge>fuga>piyo
   "hoge+huge>fuga>piyo
   "div+div>p>span+em^bq+ql
   "div>(header>ul>li*2>a)+footer>p
-  " let word = ''
+  let i = 0
   let fragment = s:SplitBy(a:line, '>', s:True)
-
-  let n = len(s:SplitBy(a:line, '+*^>', s:True))
-  let T = [{'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': '.'}]
-  for k in range(n)
-    if k ==# 0
-      continue
-    endif
-    let T = add(T, {'parent': s:NIL, 'left': s:NIL, 'right': s:NIL, 'value': ''})
-  endfor
-
+  let prevId = -1
   for degree in fragment
     let parsed = s:SplitBy(degree, '+*^', s:False)
-
-    let parentId = i
-    let prevId = -1
-    let j = 0
     echo parsed
-    " for node in parsed
-    "   let i += 1
-    "   if j ==# 0
-    "     let T[parentId].left = {'parent': parentId, 'left': s:NIL, 'right': s:NIL, 'value': node}
-    "   else
-    "     let T[prevId].right = {'parent': parentId, 'left': s:NIL, 'right': s:NIL, 'value': node}
-    "   endif
-    "
-    "   let T[i].parent = parentId
-    "   let prevId = i
-    " endfor
-  endfor
 
-  " echo T
+    if i ==# 0
+      let parentId = s:NIL
+    else
+      let parentId = i - 1
+    endif
+    let j = 0
+    for node in parsed
+      if j ==# 0
+        let T[parentId].left = i
+      else
+        let T[prevId].right = i
+      endif
+
+      let T[i].parent = parentId
+      let prevId = i
+      let i += 1
+    endfor
+  endfor
+  echo T
+
   " for i in range(strlen(a:line))
   "   let c = nr2char(strgetchar(a:line, i))
   "   if c ==# ' '
