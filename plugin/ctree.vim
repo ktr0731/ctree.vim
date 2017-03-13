@@ -1,4 +1,4 @@
-" File: plugin/treexp.vim
+" File: plugin/ctree.vim
 " Last Change: 2017 Mar 15
 " Maintainer: Taro Aoki <aizu.s1230022@gmail.com>
 " License: MIT license
@@ -12,7 +12,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-command! -nargs=0 TreexpExpand call treexp#Expand()
+command! -range=% CTree call ctree#Expand()
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
